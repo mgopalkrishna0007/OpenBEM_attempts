@@ -29,7 +29,9 @@ SrcResult SrcQuadrature::integrate(
     const Triangle<2>& src_tri,
     ConstEigRef<EigMatNX<Float, 3>> r_obs,
     const bool g_terms,
-    const bool grad_g_terms
+    const bool grad_g_terms,
+    const bool shape_grad_terms,
+    const bool shape_hess_terms
     )
 {
 
@@ -74,6 +76,46 @@ SrcResult SrcQuadrature::integrate(
             result.grad_g.col(ro) = kernel_->compute_grad(
                 r_obs.col(ro), points_3d, k
                 ) * qd.weights.transpose();
+        }
+    }
+
+    if (shape_grad_terms || shape_hess_terms)
+    {
+        // Quadrature weights multiplied by the source-coordinate monomials x', y', x'^2, x'y', y'^2
+        const EigRowVec<Float> wx = qd.weights.array() * qd.points.row(0).array();
+        const EigRowVec<Float> wy = qd.weights.array() * qd.points.row(1).array();
+        const EigRowVec<Float> wxx = wx.array() * qd.points.row(0).array();
+        const EigRowVec<Float> wxy = wx.array() * qd.points.row(1).array();
+        const EigRowVec<Float> wyy = wy.array() * qd.points.row(1).array();
+
+        if (shape_grad_terms)
+        {
+            result.rs_grad_g.setZero(6, r_obs.cols());
+            result.rsrs_grad_g.setZero(9, r_obs.cols());
+
+            for (std::size_t ro = 0; ro < r_obs.cols(); ++ro)
+            {
+                const EigMatNX<Complex, 3> grad = kernel_->compute_grad(r_obs.col(ro), points_3d, k);
+                result.rs_grad_g.col(ro).segment<3>(0) = grad * wx.transpose();
+                result.rs_grad_g.col(ro).segment<3>(3) = grad * wy.transpose();
+                result.rsrs_grad_g.col(ro).segment<3>(0) = grad * wxx.transpose();
+                result.rsrs_grad_g.col(ro).segment<3>(3) = grad * wxy.transpose();
+                result.rsrs_grad_g.col(ro).segment<3>(6) = grad * wyy.transpose();
+            }
+        }
+
+        if (shape_hess_terms)
+        {
+            result.hess_g.setZero(6, r_obs.cols());
+            result.rs_hess_g.setZero(12, r_obs.cols());
+
+            for (std::size_t ro = 0; ro < r_obs.cols(); ++ro)
+            {
+                const EigMatNX<Complex, 6> hess = kernel_->compute_hess(r_obs.col(ro), points_3d, k);
+                result.hess_g.col(ro) = hess * qd.weights.transpose();
+                result.rs_hess_g.col(ro).segment<6>(0) = hess * wx.transpose();
+                result.rs_hess_g.col(ro).segment<6>(6) = hess * wy.transpose();
+            }
         }
     }
 

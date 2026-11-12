@@ -158,6 +158,24 @@ public:
     */
     EigMat<Complex> compute(const Complex k, const Triangle<3>& obs_tri) override;
 
+
+    /**
+    * @brief Computes the shape derivatives of the RWG-tested plane wave excitation.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] obs_tri - Observation triangle.
+    * @return Derivatives with respect to the vertex coordinates of `obs_tri`; see
+    * `ExcitationBase::compute_shape()` for the layout.
+    * @details
+    * For vertex \f$ m \f$ with hat function \f$ \lambda_m \f$, computes
+    * \f[
+    * \frac{\partial b_n}{\partial\vec{r}_m} = \int_{\mathrm{obs\_tri}} d\mathcal{S}\,
+    * \left[\vec{E}\,(\nabla\lambda_m\cdot\vec{f_n})
+    * - jk\,\hat{d}\,(\vec{f_n}\cdot\vec{E})\,\lambda_m\right],
+    * \f]
+    * where \f$ \vec{E} \f$ is the plane wave field and \f$ \hat{d} \f$ its direction of propagation.
+    */
+    EigMat<Complex> compute_shape(const Complex k, const Triangle<3>& obs_tri) override;
+
 };
 
 

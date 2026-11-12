@@ -905,6 +905,42 @@ public:
 
 
     /**
+    * @brief Solves \f$ \mathbf{M}^T\mathbf{X} = \mathbf{B} \f$ for matrix \f$ \mathbf{X} \f$ with a
+    * direct solver, where \f$ \mathbf{M} \f$ is this matrix, and \f$ \mathbf{B} \f$ is a given
+    * right-hand side matrix. Reuses the factors computed by `factorize()`.
+    * @param[out] x - Solution.
+    * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix has columns.
+    */
+    void mat_solve_transpose(MatrixBase<T>& x, const MatrixBase<T>& b) const override
+    {
+        if (!factorized_)
+            throw std::runtime_error("EigenMatrix::mat_solve_transpose(): Matrix must be factorized first.");
+
+        const auto& bd =
+            dynamic_cast<const EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>&> (b);
+
+        auto& xd =
+            dynamic_cast<EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>&> (x);
+
+        if constexpr (type == EigenMatrixType::EIGEN_DENSE)
+        {
+            xd.raw_matrix() = dense_solver_->transpose().solve(bd.raw_matrix());
+            if (dense_solver_->info() != Eigen::Success)
+                throw std::runtime_error("EigenMatrix::mat_solve_transpose(): Dense solver failed.");
+        }
+
+        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
+        {
+            xd.raw_matrix() = sparse_solver_->transpose().solve(bd.raw_matrix());
+            if (sparse_solver_->info() != Eigen::Success)
+                throw std::runtime_error("EigenMatrix::mat_solve_transpose(): Sparse solver failed.");
+        }
+
+        return;
+    };
+
+
+    /**
     * @brief Solves \f$ \mathbf{M}\mathbf{X} = \mathbf{B} \f$ for matrix \f$ \mathbf{X} \f$ with the
     * GMRES iterative solver, where \f$ \mathbf{M} \f$ is this matrix, and \f$ \mathbf{B} \f$ is a given
     * right-hand side matrix.

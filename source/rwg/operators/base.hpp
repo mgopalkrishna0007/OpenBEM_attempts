@@ -19,6 +19,7 @@
 #define BEM_RWG_OPS_BASE_H
 
 #include <memory>
+#include <stdexcept>
 
 #include "types.hpp"
 #include "geometry/operations.hpp"
@@ -136,6 +137,84 @@ public:
     * @brief Virtual destructor.
     */
     virtual ~OperatorBase() = default;
+
+};
+
+/**
+* @brief Base class for shape derivatives of RWG-based BEM operators.
+* @details
+* A shape operator returns the derivatives of the element-pair matrix of an operator with
+* respect to the coordinates of the six vertices of the observation and source triangles.
+* For a pair with \f$ n_o \f$ observation and \f$ n_s \f$ source degrees of freedom, the output
+* has \f$ n_o n_s \f$ rows, ordered as `obs_dof_index * n_s + src_dof_index`, and 18 columns,
+* ordered as `3 * vertex + component`, where vertices 0-2 are the vertices of the observation
+* triangle and 3-5 those of the source triangle. If both triangles share a mesh vertex, the
+* derivative with respect to that vertex is the sum of the two corresponding columns.
+*
+* The derivatives are those of the deformation \f$ F_s(\vec{r}) = \vec{r} + s\,\vec{\tau}\,
+* \lambda_m(\vec{r}) \f$ (Kataja and Toivanen, Eng. Anal. Bound. Elem. 37, 2013), in which the RWG
+* functions follow the mesh through the Piola transform.
+*/
+class ShapeOperatorBase
+{
+public:
+
+    /**
+    * @brief Returns the degrees of freedom for the testing function space.
+    * @return Observation degrees of freedom.
+    */
+    virtual OperatorDof obs_dof() const = 0;
+
+
+    /**
+    * @brief Returns the degrees of freedom for the expansion function space.
+    * @return Source degrees of freedom.
+    */
+    virtual OperatorDof src_dof() const = 0;
+
+
+    /**
+    * @brief Computes the shape derivatives for the given observation and source triangles.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] obs_tri - Observation triangle.
+    * @param[in] src_tri - Source triangle.
+    * @return Shape derivatives in the global coordinate system, laid out as described above.
+    */
+    virtual EigMat<Complex> compute(
+        const Complex k,
+        const Triangle<3>& obs_tri,
+        const Triangle<3>& src_tri
+        ) const = 0;
+
+
+    /**
+    * @brief Assembles the computed integrals into the shape derivatives.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] obs_tri - Observation triangle in the source's local coordinate system.
+    * @param[in] src_tri - Source triangle in its local coordinate system.
+    * @param[in] obs_result - Integration result, including `ObsResult::grad_g_shape`.
+    * @return Shape derivatives in the source's local coordinate system.
+    */
+    virtual EigMat<Complex> assemble(
+        const Complex k,
+        const Triangle<3>& obs_tri,
+        const Triangle<3>& src_tri,
+        const ObsResult& obs_result
+        ) const = 0;
+
+
+    /**
+    * @brief Returns a unique pointer to a newly constructed object of the derived type.
+    * @return Unique pointer to the new object.
+    */
+    virtual std::unique_ptr<ShapeOperatorBase> clone() const
+    { throw std::runtime_error("ShapeOperatorBase::clone(): Not implemented."); };
+
+
+    /**
+    * @brief Virtual destructor.
+    */
+    virtual ~ShapeOperatorBase() = default;
 
 };
 

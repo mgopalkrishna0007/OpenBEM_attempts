@@ -83,6 +83,36 @@ public:
         ) override;
 
 
+    /**
+    * @brief Assembles the shape derivative of the excitation matrix for a given vertex velocity field.
+    * @param[out] mat - Matrix to store \f$ \partial_s \mathbf{b} \f$, with the same layout as in `assemble()`.
+    * @param[in] exc - Excitation object; must implement `ExcitationBase::compute_shape()`.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] velocity - Velocity of each mesh vertex (3 x number of vertices).
+    */
+    void assemble_shape_derivative(
+        MatrixBase<Complex>& mat,
+        ExcitationBase& exc,
+        const Complex k,
+        ConstEigRef<EigMatNX<Float, 3>> velocity
+        );
+
+
+    /**
+    * @brief Computes the shape sensitivity \f$ \sum_{n,j} y_{nj}\,\partial b_{nj}/\partial\vec{r}_v \f$
+    * with respect to every mesh vertex \f$ \vec{r}_v \f$.
+    * @param[in] exc - Excitation object; must implement `ExcitationBase::compute_shape()`.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] y - Weights, one row per mesh edge and one column per excitation.
+    * @return Sensitivity with respect to the coordinates of each vertex (3 x number of vertices).
+    */
+    EigMatNX<Complex, 3> shape_sensitivity(
+        ExcitationBase& exc,
+        const Complex k,
+        ConstEigRef<EigMat<Complex>> y
+        );
+
+
 protected:
 
     const TriangleMesh<3>& mesh_;

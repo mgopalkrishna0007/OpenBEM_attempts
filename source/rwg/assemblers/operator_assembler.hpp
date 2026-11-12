@@ -114,6 +114,62 @@ public:
 
 
     /**
+    * @brief Assembles the shape derivative of an operator matrix for a given vertex velocity field.
+    * @param[out] mat - Matrix to store \f$ \partial_s \mathbf{A} \f$ for the deformation
+    * \f$ F_s(\vec{r}) = \vec{r} + s\vec{V}(\vec{r}) \f$, with \f$ \vec{V} \f$ interpolated linearly
+    * from the vertex velocities.
+    * @param[in] op - Shape operator object.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] obs_velocity - Velocity of each vertex of the observation mesh (3 x number of vertices).
+    * @param[in] src_velocity - Velocity of each vertex of the source mesh (3 x number of vertices).
+    */
+    void assemble_shape_derivative(
+        MatrixBase<Complex>& mat,
+        const ShapeOperatorBase& op,
+        const Complex k,
+        ConstEigRef<EigMatNX<Float, 3>> obs_velocity,
+        ConstEigRef<EigMatNX<Float, 3>> src_velocity
+        );
+
+
+    /**
+    * @brief Assembles the shape derivative of an operator matrix when the observation and source
+    * meshes are the same.
+    * @param[out] mat - Matrix to store the shape derivative.
+    * @param[in] op - Shape operator object.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] velocity - Velocity of each vertex of the mesh (3 x number of vertices).
+    */
+    void assemble_shape_derivative(
+        MatrixBase<Complex>& mat,
+        const ShapeOperatorBase& op,
+        const Complex k,
+        ConstEigRef<EigMatNX<Float, 3>> velocity
+        )
+    { assemble_shape_derivative(mat, op, k, velocity, velocity); return; };
+
+
+    /**
+    * @brief Computes the shape sensitivity \f$ \mathbf{y}^T (\partial\mathbf{A}/\partial\vec{r}_v)\,\mathbf{x} \f$
+    * of the bilinear form \f$ \mathbf{y}^T\mathbf{A}\mathbf{x} \f$ with respect to every mesh vertex
+    * \f$ \vec{r}_v \f$, without forming any shape-derivative matrix.
+    * @param[in] op - Shape operator object.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] x - Column vector multiplying the operator from the right (source degrees of freedom).
+    * @param[in] y - Column vector multiplying the operator from the left (observation degrees of freedom).
+    * @return Sensitivity with respect to the coordinates of each vertex (3 x number of vertices).
+    * @details This is the quantity needed by the adjoint variable method, where `x` is the state
+    * and `y` the (conjugated) adjoint solution. The observation and source meshes must be the same.
+    */
+    EigMatNX<Complex, 3> shape_sensitivity(
+        const ShapeOperatorBase& op,
+        const Complex k,
+        ConstEigRef<EigColVec<Complex>> x,
+        ConstEigRef<EigColVec<Complex>> y
+        );
+
+
+    /**
     * @brief Prepares the matrix for assembly (e.g., resizing and preallocation).
     * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
     * to source edges, and rows corresponding to observation edges.

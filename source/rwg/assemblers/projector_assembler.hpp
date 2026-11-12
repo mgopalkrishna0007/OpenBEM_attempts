@@ -92,6 +92,38 @@ public:
         ) override;
 
 
+    /**
+    * @brief Assembles the shape derivative of the projector matrix for a given vertex velocity field.
+    * @param[out] mat - Matrix to store \f$ \partial_s \mathbf{P} \f$, with the same layout as in `assemble()`.
+    * @param[in] op - Projector object; must implement `ProjectorBase::compute_shape()`.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] velocity - Velocity of each mesh vertex (3 x number of vertices).
+    */
+    void assemble_shape_derivative(
+        MatrixBase<Complex>& mat,
+        ProjectorBase& op,
+        const Complex k,
+        ConstEigRef<EigMatNX<Float, 3>> velocity
+        );
+
+
+    /**
+    * @brief Computes the shape sensitivity \f$ \mathbf{y}^T(\partial\mathbf{P}/\partial\vec{r}_v)\,\mathbf{x} \f$
+    * with respect to every mesh vertex \f$ \vec{r}_v \f$.
+    * @param[in] op - Projector object; must implement `ProjectorBase::compute_shape()`.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] x - Column vector of source coefficients (one entry per mesh edge).
+    * @param[in] y - Column vector of weights for the projected field components.
+    * @return Sensitivity with respect to the coordinates of each vertex (3 x number of vertices).
+    */
+    EigMatNX<Complex, 3> shape_sensitivity(
+        ProjectorBase& op,
+        const Complex k,
+        ConstEigRef<EigColVec<Complex>> x,
+        ConstEigRef<EigColVec<Complex>> y
+        );
+
+
 protected:
 
     const PointCloud<3>& obs_cloud_;

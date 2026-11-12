@@ -80,6 +80,27 @@ public:
         const Complex k
         ) const override;
 
+
+    /**
+    * @brief Computes the Hessian of the kernel for given observation and source points.
+    * @param[in] r_obs - Observer position vector.
+    * @param[in] r_src - Set of source position vectors.
+    * @param[in] k - Complex wavenumber.
+    * @return Unique components of the Hessian, ordered as \f$ (xx, xy, xz, yy, yz, zz) \f$.
+    * @details
+    * With \f$ \vec{R} = \vec{r} - \vec{r}\,' \f$ and \f$ R = |\vec{R}| \f$, computes
+    * \f[
+    * \nabla\nabla\left(\frac{e^{-jkR}}{4\pi R}\right) =
+    * \frac{e^{-jkR}}{4\pi}\left[\frac{3 + 3jkR - k^2R^2}{R^5}\,\vec{R}\vec{R}^T
+    * - \frac{1 + jkR}{R^3}\,\mathbf{I}\right].
+    * \f]
+    */
+    EigMatNX<Complex, 6> compute_hess(
+        ConstEigRef<EigColVecN<Float, 3>> r_obs,
+        ConstEigRef<EigMatNX<Float, 3>> r_src,
+        const Complex k
+        ) const override;
+
 };
 
 

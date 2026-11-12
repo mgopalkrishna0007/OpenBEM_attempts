@@ -1,5 +1,23 @@
 # Changes
 
+## [Unreleased]
+
+### Added
+
+- Analytical shape derivatives of the TEFIE following Kataja and Toivanen, "On shape differentiation of discretized electric field integral equation", Eng. Anal. Bound. Elem. 37 (2013).
+- `ShapeOperatorBase` and `VectorHypersingularShapeOp` for element-pair shape derivatives of the vector hypersingular operator.
+- Shape-derivative assembly (`assemble_shape_derivative()`) and adjoint sensitivity contraction (`shape_sensitivity()`) in `OperatorAssembler`, `ExcitationAssembler`, and `ProjectorAssembler`.
+- `compute_shape()` for `RwgPlaneWave` and `VectorHypersingularProj`, with default (throwing) implementations in `ExcitationBase` and `ProjectorBase`.
+- Shape-derivative methods in `Tefie`: `j_matrix_shape_derivative()`, `j_matrix_shape_sensitivity()`, `exc_matrix_shape_derivative()`, `exc_matrix_shape_sensitivity()`, `j_projector_shape_derivative()`, and `j_projector_shape_sensitivity()`.
+- Moments of the kernel gradient (`SrcResult::rs_grad_g`, `SrcResult::rsrs_grad_g`, `ObsResult::grad_g_shape`) with analytical singularity subtraction in `SrcSingularity`, and kernel Hessian moments (`SrcResult::hess_g`, `SrcResult::rs_hess_g`).
+- `HGF::compute_hess()` and a default `ScalarKernelBase::compute_hess()`.
+- `MatrixBase::mat_solve_transpose()` and its `EigenMatrix` implementation, for adjoint solves that reuse the forward factorization.
+- Example 4: adjoint sensitivity of the radar cross-section of a PEC sphere with respect to its radius.
+
+### Changed
+
+- `SrcIntegratorBase::integrate()` and `ObsIntegratorBase::integrate()` take optional flags for the shape-derivative terms; existing calls are unaffected.
+
 ## [1.1.0] - July 11, 2026
 
 ### Added

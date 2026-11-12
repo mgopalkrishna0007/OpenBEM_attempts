@@ -91,6 +91,8 @@ public:
     * @param[in] r_obs - Observation points in the local coordinate system of `src_tri`.
     * @param[in] g_terms - Whether to compute kernel terms (optional).
     * @param[in] grad_g_terms - Whether to compute kernel gradient terms (optional).
+    * @param[in] shape_grad_terms - Whether to compute moments of the kernel gradient (optional).
+    * @param[in] shape_hess_terms - Whether to compute moments of the kernel Hessian (optional).
     * @return Integration result.
     * @details
     * If `g_terms` is true, the function computes
@@ -121,7 +123,9 @@ public:
         const Triangle<2>& src_tri,
         ConstEigRef<EigMatNX<Float, 3>> r_obs,
         const bool g_terms = true,
-        const bool grad_g_terms = true
+        const bool grad_g_terms = true,
+        const bool shape_grad_terms = false,
+        const bool shape_hess_terms = false
         ) override;
 
 
@@ -142,6 +146,36 @@ protected:
         ConstEigRef<EigMatNX<Float, 3>> r_obs,
         const bool g_terms = true,
         const bool grad_g_terms = true
+        );
+
+
+    /**
+    * @brief Computes the singular parts of the moments of the kernel gradient analytically.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] src_tri - Source triangle in 2D space.
+    * @param[in] r_obs - Observation points in the local coordinate system of `src_tri`.
+    * @param[out] rs_grad_g - Singular part of the first moments (see `SrcResult::rs_grad_g`).
+    * @param[out] rsrs_grad_g - Singular part of the second moments (see `SrcResult::rsrs_grad_g`).
+    * @details
+    * The subtracted kernel is \f$ (1/R - k^2 R/2) / (4\pi) \f$, consistent with
+    * `integrate_singular()` and with the `SingularitySubtractedHGF` and
+    * `SingularitySubtractedTaylorHGF` kernels used for the remainder. With
+    * \f$ \vec{r} = \vec{\rho} + z\hat{z} \f$ and \f$ \vec{p} = \vec{r}\,' - \vec{\rho} \f$, the
+    * weighted integrals
+    * \f[
+    * \int \frac{w\,\vec{p}}{R^3},\quad z\int \frac{w}{R^3},\quad
+    * \int \frac{w\,\vec{p}}{R},\quad z\int \frac{w}{R}
+    * \f]
+    * for polynomial weights \f$ w \f$ of degree up to two are reduced to line integrals over the
+    * triangle edges with the surface divergence theorem, using \f$ \nabla' R = \vec{p}/R \f$ and
+    * \f$ \nabla'(1/R) = -\vec{p}/R^3 \f$.
+    */
+    void integrate_singular_shape(
+        const Complex k,
+        const Triangle<2>& src_tri,
+        ConstEigRef<EigMatNX<Float, 3>> r_obs,
+        EigMatNX<Complex, 6>& rs_grad_g,
+        EigMatNX<Complex, 9>& rsrs_grad_g
         );
 
 

@@ -360,6 +360,18 @@ public:
 
 
     /**
+    * @brief Solves \f$ \mathbf{M}^T\mathbf{X} = \mathbf{B} \f$ for matrix \f$ \mathbf{X} \f$ with a
+    * direct solver, where \f$ \mathbf{M} \f$ is this matrix, and \f$ \mathbf{B} \f$ is a given
+    * right-hand side matrix. Uses the factors computed by `factorize()`.
+    * @param[out] x - Solution.
+    * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix has columns.
+    * @note Useful for adjoint problems, which can reuse the factorization of the forward problem.
+    */
+    virtual void mat_solve_transpose(MatrixBase<T>& x, const MatrixBase<T>& b) const
+    { throw std::runtime_error("MatrixBase::mat_solve_transpose(): Not implemented."); };
+
+
+    /**
     * @brief Sets the matrix to identity (ones along the diagonal, zeros elsewhere).
     */
     virtual void set_identity()

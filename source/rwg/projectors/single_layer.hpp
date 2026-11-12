@@ -217,7 +217,8 @@ public:
     */
     template <typename SrcIntegratorType = SrcStrategic>
     VectorHypersingularProj(const SrcIntegratorType src_integrator = SrcStrategic()):
-        proj_g_(src_integrator), proj_gradg_(src_integrator) {};
+        proj_g_(src_integrator), proj_gradg_(src_integrator),
+        src_integrator_(std::make_shared<SrcIntegratorType> (src_integrator)) {};
 
 
     /**
@@ -255,10 +256,36 @@ public:
         ) override;
 
 
+    /**
+    * @brief Computes the shape derivatives of the vector hypersingular projector.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] obs_points - Observation coordinates on which to project the generated field.
+    * @param[in] src_tri - Source triangle.
+    * @return Derivatives with respect to the vertex coordinates of `src_tri`; see
+    * `ProjectorBase::compute_shape()` for the layout.
+    * @details
+    * For vertex \f$ m \f$ with hat function \f$ \lambda_m \f$ and a displacement along
+    * \f$ \vec{\tau} \f$, the derivative of the projected field is
+    * \f[
+    * \int d\mathcal{S}'\left[\vec{\tau}\,(\nabla\lambda_m\cdot\vec{f_n})\,G
+    * - \vec{f_n}\,\lambda_m\,\nabla G\cdot\vec{\tau}\right]
+    * - \frac{\nabla\cdot\vec{f_n}}{k^2}\int d\mathcal{S}'\,\lambda_m\,\nabla\nabla G\cdot\vec{\tau},
+    * \f]
+    * where \f$ \nabla \f$ acts on the observation point. The observation points must not lie close
+    * to the source triangle (e.g. far-field or radar cross-section evaluations).
+    */
+    EigMat<Complex> compute_shape(
+        const Complex k,
+        ConstEigRef<EigMatNX<Float, 3>> obs_points,
+        const Triangle<3>& src_tri
+        ) override;
+
+
 protected:
 
     VectorSingleLayerProj proj_g_;
     GradScalarSingleLayerProj proj_gradg_;
+    std::shared_ptr<SrcIntegratorBase> src_integrator_;
 
 };
 

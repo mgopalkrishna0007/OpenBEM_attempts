@@ -229,6 +229,10 @@ if (BUILD_EXAMPLES STREQUAL "yes")
     target_include_directories(ex02 PRIVATE ${INC_DIR})
     target_link_libraries(ex02 ${LINK_LIBS})
 
+    add_executable(ex04 ${EXAMPLE_DIR}/ex04_efie_adjoint.cpp)
+    target_include_directories(ex04 PRIVATE ${INC_DIR})
+    target_link_libraries(ex04 ${LINK_LIBS})
+
 endif ()
 
 

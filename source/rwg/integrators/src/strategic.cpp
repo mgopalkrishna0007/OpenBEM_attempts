@@ -30,7 +30,9 @@ SrcResult SrcStrategic::integrate(
     const Triangle<2>& src_tri,
     ConstEigRef<EigMatNX<Float, 3>> r_obs,
     const bool g_terms,
-    const bool grad_g_terms
+    const bool grad_g_terms,
+    const bool shape_grad_terms,
+    const bool shape_hess_terms
     )
 {
 
@@ -57,16 +59,24 @@ SrcResult SrcStrategic::integrate(
     bool singularity_separation = false;
 
     if (line_integration)
-        return src_line_.integrate(k, src_tri, r_obs, g_terms, grad_g_terms);
+        return src_line_.integrate(
+            k, src_tri, r_obs, g_terms, grad_g_terms, shape_grad_terms, shape_hess_terms
+            );
 
     else if (singularity_subtraction)
-        return src_sthgf_.integrate(k, src_tri, r_obs, g_terms, grad_g_terms);
+        return src_sthgf_.integrate(
+            k, src_tri, r_obs, g_terms, grad_g_terms, shape_grad_terms, shape_hess_terms
+            );
 
     else if (singularity_separation)
-        return src_shgf_.integrate(k, src_tri, r_obs, g_terms, grad_g_terms);
+        return src_shgf_.integrate(
+            k, src_tri, r_obs, g_terms, grad_g_terms, shape_grad_terms, shape_hess_terms
+            );
 
     else
-        return src_hgf_.integrate(k, src_tri, r_obs, g_terms, grad_g_terms);
+        return src_hgf_.integrate(
+            k, src_tri, r_obs, g_terms, grad_g_terms, shape_grad_terms, shape_hess_terms
+            );
 
 };
 

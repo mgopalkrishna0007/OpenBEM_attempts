@@ -35,9 +35,16 @@ SrcResult SrcLineIntegrator::integrate(
     const Triangle<2>& src_tri,
     ConstEigRef<EigMatNX<Float, 3>> r_obs,
     const bool g_terms,
-    const bool grad_g_terms
+    const bool grad_g_terms,
+    const bool shape_grad_terms,
+    const bool shape_hess_terms
     )
 {
+
+    if (shape_grad_terms || shape_hess_terms)
+        throw std::runtime_error(
+            "SrcLineIntegrator::integrate(): Shape-derivative terms are not supported by line integration."
+            );
 
     EigRowVec<Float> ref_points;
     EigRowVec<Float> ref_weights;

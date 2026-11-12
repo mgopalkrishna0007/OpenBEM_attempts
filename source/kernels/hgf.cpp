@@ -58,6 +58,37 @@ EigMatNX<Complex, 3> HGF::compute_grad(
 }
 
 
+EigMatNX<Complex, 6> HGF::compute_hess(
+    ConstEigRef<EigColVecN<Float, 3>> r_obs,
+    ConstEigRef<EigMatNX<Float, 3>> r_src,
+    const Complex k
+    ) const
+{
+    EigMatNX<Float, 3> r_diff = -(r_src.colwise() - r_obs);
+    EigRowVec<Float> r = r_diff.colwise().norm();
+    assert(r.array().all() > 0 && "HGF::compute_hess(): Distance must be greater than 0.");
+
+    const EigRowVec<Complex> jkr = J * k * r.array();
+    const EigRowVec<Float> r_sq = r.array() * r.array();
+    const EigRowVec<Complex> e = Eigen::exp(-jkr.array()) / four_pi;
+
+    // coefficients of R R^T and of the identity
+    const EigRowVec<Complex> c_rr = e.array() * (3.0 + 3.0 * jkr.array() + jkr.array() * jkr.array()) /
+        (r_sq.array() * r_sq.array() * r.array());
+    const EigRowVec<Complex> c_id = -e.array() * (one + jkr.array()) / (r_sq.array() * r.array());
+
+    EigMatNX<Complex, 6> hess (6, r.cols());
+    hess.row(0) = c_rr.array() * r_diff.row(0).array() * r_diff.row(0).array() + c_id.array();
+    hess.row(1) = c_rr.array() * r_diff.row(0).array() * r_diff.row(1).array();
+    hess.row(2) = c_rr.array() * r_diff.row(0).array() * r_diff.row(2).array();
+    hess.row(3) = c_rr.array() * r_diff.row(1).array() * r_diff.row(1).array() + c_id.array();
+    hess.row(4) = c_rr.array() * r_diff.row(1).array() * r_diff.row(2).array();
+    hess.row(5) = c_rr.array() * r_diff.row(2).array() * r_diff.row(2).array() + c_id.array();
+
+    return hess;
+}
+
+
 EigRowVec<Complex> SingularitySubtractedHGF::compute(
     ConstEigRef<EigColVecN<Float, 3>> r_obs,
     ConstEigRef<EigMatNX<Float, 3>> r_src,

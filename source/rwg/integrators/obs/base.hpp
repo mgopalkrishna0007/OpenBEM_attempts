@@ -42,6 +42,20 @@ struct ObsResult
     EigRowVecN<Complex, 12> rs_g = EigRowVecN<Complex, 12>::Zero();
     EigRowVecN<Complex, 9> grad_g = EigRowVecN<Complex, 9>::Zero();
     EigRowVecN<Complex, 15> rot_grad_g = EigRowVecN<Complex, 15>::Zero();
+
+    /**
+    * @brief Moments of the kernel gradient for shape derivatives (empty unless requested).
+    * @details
+    * A 3 x 60 matrix with entries
+    * \f[
+    * \int_{\mathrm{obs\_tri}} d\mathcal{S}\,m_a(\vec{r})
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,n_b(\vec{r}\,')\,\partial_c G(k, \vec{r}, \vec{r}\,')
+    * \f]
+    * at row \f$ c \f$ and column \f$ 6a + b \f$, where \f$ m_a \f$ runs over the observation
+    * monomials \f$ (1, x, y, z, x^2, xy, xz, y^2, yz, z^2) \f$ and \f$ n_b \f$ over the source monomials
+    * \f$ (1, x', y', x'^2, x'y', y'^2) \f$, in the local coordinate system of the source triangle.
+    */
+    EigMat<Complex> grad_g_shape;
 };
 
 
@@ -61,6 +75,8 @@ public:
     * @param[in] rs_g_terms - Whether to compute the vector kernel termss (optional).
     * @param[in] grad_g_terms - Whether to compute the gradient kernel terms (optional).
     * @param[in] rot_grad_g_terms - Whether to compute the rotated gradient kernel terms (optional).
+    * @param[in] shape_terms - Whether to compute the kernel-gradient moments needed for shape
+    * derivatives, `ObsResult::grad_g_shape` (optional).
     * @return Integration result.
     * @details
     * If `g_term` is true, computes
@@ -95,7 +111,8 @@ public:
         const bool g_term = true,
         const bool rs_g_terms = true,
         const bool grad_g_terms = true,
-        const bool rot_grad_g_terms = true
+        const bool rot_grad_g_terms = true,
+        const bool shape_terms = false
         ) = 0;
 
 

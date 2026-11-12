@@ -17,6 +17,8 @@
 
 #include "rwg/assemblers/excitation_assembler.hpp"
 
+#include <stdexcept>
+
 #include "types.hpp"
 #include "geometry/mesh/triangle_mesh.hpp"
 #include "geometry/primitives/triangle.hpp"
@@ -87,5 +89,89 @@ void ExcitationAssembler::assemble(
 
 };
 
-}
 
+void ExcitationAssembler::assemble_shape_derivative(
+    MatrixBase<Complex>& mat,
+    ExcitationBase& exc,
+    const Complex k,
+    ConstEigRef<EigMatNX<Float, 3>> velocity
+    )
+{
+
+    if (exc.obs_dof() != OperatorDof::EDGE)
+        throw std::invalid_argument(
+            "ExcitationAssembler::assemble_shape_derivative(): only edge degrees of freedom are supported."
+            );
+
+    if (velocity.cols() != mesh_.num_verts())
+        throw std::invalid_argument(
+            "ExcitationAssembler::assemble_shape_derivative(): velocity size does not match the mesh."
+            );
+
+    mat.resize(mesh_.num_edges(), exc.num_excitations());
+    mat.preallocate(mesh_.num_edges() * exc.num_excitations());
+
+    for (Index ii = 0; ii < elems_.size(); ++ii)
+    {
+        Index face = elems_[ii];
+        Triangle<3> obs_tri = mesh_.elem_primitive(face);
+
+        const EigMat<Complex> derivs = exc.compute_shape(k, obs_tri);
+
+        EigColVecN<Float, 9> vel;
+        for (uint8_t vert = 0; vert < 3; ++vert)
+            vel.segment<3>(3 * vert) = velocity.col(mesh_.elems(vert, face));
+
+        for (Index rhs = 0; rhs < exc.num_excitations(); ++rhs)
+        {
+            const EigColVecN<Complex, 3> values = derivs.middleCols(9 * rhs, 9) * vel.cast<Complex>();
+            for (uint8_t edge = 0; edge < 3; ++edge)
+                mat.add_value(mesh_.elem_edges()(edge, face), rhs, values[edge]);
+        }
+    }
+
+    mat.assemble();
+
+    return;
+
+};
+
+
+EigMatNX<Complex, 3> ExcitationAssembler::shape_sensitivity(
+    ExcitationBase& exc,
+    const Complex k,
+    ConstEigRef<EigMat<Complex>> y
+    )
+{
+
+    if (exc.obs_dof() != OperatorDof::EDGE)
+        throw std::invalid_argument(
+            "ExcitationAssembler::shape_sensitivity(): only edge degrees of freedom are supported."
+            );
+
+    EigMatNX<Complex, 3> sens = EigMatNX<Complex, 3>::Zero(3, mesh_.num_verts());
+
+    for (Index ii = 0; ii < elems_.size(); ++ii)
+    {
+        Index face = elems_[ii];
+        Triangle<3> obs_tri = mesh_.elem_primitive(face);
+
+        const EigMat<Complex> derivs = exc.compute_shape(k, obs_tri);
+
+        for (Index rhs = 0; rhs < exc.num_excitations(); ++rhs)
+        {
+            EigRowVecN<Complex, 3> weights;
+            for (uint8_t edge = 0; edge < 3; ++edge)
+                weights[edge] = y(mesh_.elem_edges()(edge, face), rhs);
+
+            const EigRowVecN<Complex, 9> contrib = weights * derivs.middleCols(9 * rhs, 9);
+            for (uint8_t vert = 0; vert < 3; ++vert)
+                sens.col(mesh_.elems(vert, face)) += contrib.segment<3>(3 * vert).transpose();
+        }
+    }
+
+    return sens;
+
+};
+
+}

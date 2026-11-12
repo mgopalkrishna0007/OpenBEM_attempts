@@ -34,7 +34,8 @@ ObsResult ObsQuadrature::integrate(
     const bool g_term,
     const bool rs_g_terms,
     const bool grad_g_terms,
-    const bool rot_grad_g_terms
+    const bool rot_grad_g_terms,
+    const bool shape_terms
     )
 {
 
@@ -47,10 +48,10 @@ ObsResult ObsQuadrature::integrate(
     QuadratureData<3> qd = tri_quad_->compute(obs_tri, eval);
 
     bool src_g_terms = g_term || rs_g_terms;
-    bool src_grad_g_terms = grad_g_terms || rot_grad_g_terms;
+    bool src_grad_g_terms = grad_g_terms || rot_grad_g_terms || shape_terms;
 
     SrcResult src_result = src_integrator_->integrate(
-        k, src_tri, qd.points, src_g_terms, src_grad_g_terms
+        k, src_tri, qd.points, src_g_terms, src_grad_g_terms, shape_terms, false
         );
 
     ObsResult obs_result;
@@ -66,6 +67,9 @@ ObsResult ObsQuadrature::integrate(
 
     if (rot_grad_g_terms)
         obs_result.rot_grad_g = compute_rot_grad_g_terms(src_result, qd);
+
+    if (shape_terms)
+        obs_result.grad_g_shape = compute_grad_g_shape_terms(src_result, qd);
 
     return obs_result;
 
@@ -196,5 +200,48 @@ EigRowVecN<Complex, 15> ObsQuadrature::compute_rot_grad_g_terms(
 
 };
 
-}
 
+EigMat<Complex> ObsQuadrature::compute_grad_g_shape_terms(
+    const SrcResult& src_result, const QuadratureData<3>& qd
+    )
+{
+
+    const Index num_points = qd.points.cols();
+
+    // Weighted observation monomials (1, x, y, z, x^2, xy, xz, y^2, yz, z^2)
+    EigMat<Float> mono (num_points, 10);
+    for (Index q = 0; q < num_points; ++q)
+    {
+        const Float x = qd.points(0, q), y = qd.points(1, q), z = qd.points(2, q);
+        const Float w = qd.weights[q];
+        mono.row(q) << w, w * x, w * y, w * z, w * x * x, w * x * y, w * x * z,
+            w * y * y, w * y * z, w * z * z;
+    }
+
+    // Source moments (1, x', y', x'^2, x'y', y'^2) of each gradient component
+    const EigMatNX<Complex, 3>* src[6];
+    EigMatNX<Complex, 3> rs_x = src_result.rs_grad_g.topRows(3);
+    EigMatNX<Complex, 3> rs_y = src_result.rs_grad_g.bottomRows(3);
+    EigMatNX<Complex, 3> rsrs_xx = src_result.rsrs_grad_g.topRows(3);
+    EigMatNX<Complex, 3> rsrs_xy = src_result.rsrs_grad_g.middleRows(3, 3);
+    EigMatNX<Complex, 3> rsrs_yy = src_result.rsrs_grad_g.bottomRows(3);
+    src[0] = &src_result.grad_g;
+    src[1] = &rs_x;
+    src[2] = &rs_y;
+    src[3] = &rsrs_xx;
+    src[4] = &rsrs_xy;
+    src[5] = &rsrs_yy;
+
+    EigMat<Complex> I = EigMat<Complex>::Zero(3, 60);
+    for (uint8_t b = 0; b < 6; ++b)
+    {
+        const EigMatMN<Complex, 3, 10> block = (*src[b]) * mono;
+        for (uint8_t a = 0; a < 10; ++a)
+            I.col(6 * a + b) = block.col(a);
+    }
+
+    return I;
+
+};
+
+}

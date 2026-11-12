@@ -489,6 +489,103 @@ protected:
 
 
 /**
+* @brief Class for computing the shape derivatives of the vector hypersingular operator.
+* @details
+* Computes the derivatives of the element-pair matrix of `VectorHypersingularOp` with respect
+* to the vertex coordinates of the observation and source triangles, using the analytical
+* formulas of J. Kataja and J. I. Toivanen, "On shape differentiation of discretized electric
+* field integral equation", Eng. Anal. Bound. Elem. 37 (2013) 1197-1203, eqs. (24) and (26).
+* For vertex \f$ m \f$ with hat function \f$ \lambda_m \f$, the derivative along \f$ \vec{\tau} \f$ of
+* \f[
+* T_{mn} = \int\int \vec{f_m}\cdot\vec{f_n}\,G - \frac{1}{k^2}\int\int
+* \nabla\cdot\vec{f_m}\,\nabla'\cdot\vec{f_n}\,G
+* \f]
+* is \f$ \partial_s I_1 - \partial_s I_2 / k^2 \f$, with
+* \f{align*}{
+* \partial_s I_2 &= \int\int \nabla\cdot\vec{f_m}\,\nabla'\cdot\vec{f_n}\,
+* \nabla G\cdot\vec{\tau}\,(\lambda_m(\vec{r}) - \lambda_m(\vec{r}\,')), \\
+* \partial_s I_1 &= \int\int \left[(\vec{f_m}\cdot\nabla\lambda_m(\vec{r}))(\vec{\tau}\cdot\vec{f_n})
+* + (\vec{f_m}\cdot\vec{\tau})(\nabla\lambda_m(\vec{r}\,')\cdot\vec{f_n})\right] G
+* + \vec{f_m}\cdot\vec{f_n}\,\nabla G\cdot\vec{\tau}\,(\lambda_m(\vec{r}) - \lambda_m(\vec{r}\,')).
+* \f}
+* The integrals of \f$ G \f$ are taken from `ObsResult::rs_g` and those of \f$ \nabla G \f$ from
+* `ObsResult::grad_g_shape`, both computed with singularity subtraction for nearby triangles.
+* The output layout is described in `ShapeOperatorBase`.
+*/
+class VectorHypersingularShapeOp: public ShapeOperatorBase
+{
+public:
+
+    /**
+    * @brief Constructs a `VectorHypersingularShapeOp` object with a specified integration object.
+    * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
+    * @param[in] obs_integrator - Integration object for the observation triangle (optional).
+    */
+    template <typename ObsIntegratorType = ObsStrategic>
+    VectorHypersingularShapeOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
+        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)) {};
+
+
+    /**
+    * @brief Returns the degrees of freedom for the testing function space.
+    * @return Observation degrees of freedom.
+    */
+    OperatorDof obs_dof() const override { return OperatorDof::EDGE; };
+
+
+    /**
+    * @brief Returns the degrees of freedom for the expansion function space.
+    * @return Source degrees of freedom.
+    */
+    OperatorDof src_dof() const override { return OperatorDof::EDGE; };
+
+
+    /**
+    * @brief Computes the shape derivatives for the given observation and source triangles.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] obs_tri - Observation triangle.
+    * @param[in] src_tri - Source triangle.
+    * @return Shape derivatives in the global coordinate system (9 x 18).
+    */
+    EigMat<Complex> compute(
+        const Complex k,
+        const Triangle<3>& obs_tri,
+        const Triangle<3>& src_tri
+        ) const override;
+
+
+    /**
+    * @brief Assembles the computed integrals into the shape derivatives.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] obs_tri - Observation triangle in the source's local coordinate system.
+    * @param[in] src_tri - Source triangle in its local coordinate system.
+    * @param[in] obs_result - Integration result.
+    * @return Shape derivatives in the source's local coordinate system (9 x 18).
+    */
+    EigMat<Complex> assemble(
+        const Complex k,
+        const Triangle<3>& obs_tri,
+        const Triangle<3>& src_tri,
+        const ObsResult& obs_result
+        ) const override;
+
+
+    /**
+    * @brief Returns a unique pointer to a deep copy of this object.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<ShapeOperatorBase> clone() const override
+    { return std::make_unique<VectorHypersingularShapeOp> (*this); };
+
+
+protected:
+
+    std::shared_ptr<ObsIntegratorBase> obs_integrator_;
+
+};
+
+
+/**
 * @brief Class for computing the rotationally-tested vector hypersingular operator.
 * @details
 * Computes

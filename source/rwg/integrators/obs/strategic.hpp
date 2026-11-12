@@ -153,6 +153,7 @@ public:
     * @param[in] rs_g_terms - Whether to compute the vector kernel termss (optional).
     * @param[in] grad_g_terms - Whether to compute the gradient kernel terms (optional).
     * @param[in] rot_grad_g_terms - Whether to compute the rotated gradient kernel terms (optional).
+    * @param[in] shape_terms - Whether to compute the kernel-gradient moments for shape derivatives (optional).
     * @return Integration result.
     * @details
     * If `g_term` is true, computes
@@ -187,7 +188,8 @@ public:
         const bool g_term = true,
         const bool rs_g_terms = true,
         const bool grad_g_terms = true,
-        const bool rot_grad_g_terms = true
+        const bool rot_grad_g_terms = true,
+        const bool shape_terms = false
         ) override;
 
 

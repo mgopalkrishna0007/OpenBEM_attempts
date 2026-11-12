@@ -18,6 +18,8 @@
 #ifndef BEM_RWG_EXC_BASE_H
 #define BEM_RWG_EXC_BASE_H
 
+#include <stdexcept>
+
 #include "types.hpp"
 #include "rwg/function_space.hpp"
 
@@ -72,6 +74,25 @@ public:
     * @return Number of excitations (right-hand sides).
     */
     virtual Index num_excitations() const = 0;
+
+
+    /**
+    * @brief Computes the shape derivatives of the tested excitation for a given observation triangle.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] obs_tri - Observation triangle.
+    * @return Derivatives of the tested excitation with respect to the vertex coordinates of
+    * `obs_tri`. Rows correspond to observation degrees of freedom, and columns are ordered as
+    * `9 * excitation + 3 * vertex + component`.
+    * @details
+    * The testing functions follow the deformation through the Piola transform, as in
+    * Kataja and Toivanen, Eng. Anal. Bound. Elem. 37, 2013. Excitations that do not support shape
+    * derivatives may leave the default implementation, which throws.
+    */
+    virtual EigMat<Complex> compute_shape(
+        const Complex k,
+        const Triangle<3>& obs_tri
+        )
+    { throw std::runtime_error("ExcitationBase::compute_shape(): Not implemented."); };
 
 
     /**

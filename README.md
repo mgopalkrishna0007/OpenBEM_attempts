@@ -58,6 +58,10 @@ Citing OpenBEM: [![DOI](https://zenodo.org/badge/1060257425.svg)](https://doi.or
   pairs for which to compute integrals, to enable compatibility with
   mesh distribution and acceleration algorithms.
 
+- Analytical shape derivatives of the TEFIE system matrix, plane wave
+  excitation, and field projectors, for adjoint-based shape sensitivity
+  analysis and optimization [[Kataja, Toivanen, 2013]](https://doi.org/10.1016/j.enganabound.2013.05.006).
+
 ### Features coming "soon"
 
 - A built-in standard acceleration algorithm (Q3-Q4 2026).

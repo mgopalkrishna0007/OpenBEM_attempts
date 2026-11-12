@@ -96,6 +96,7 @@ public:
     * @param[in] rs_g_terms - Whether to compute the vector kernel termss (optional).
     * @param[in] grad_g_terms - Whether to compute the gradient kernel terms (optional).
     * @param[in] rot_grad_g_terms - Whether to compute the rotated gradient kernel terms (optional).
+    * @param[in] shape_terms - Whether to compute the kernel-gradient moments for shape derivatives (optional).
     * @return Integration result.
     * @details
     * If `g_term` is true, computes
@@ -130,7 +131,8 @@ public:
         const bool g_term = true,
         const bool rs_g_terms = true,
         const bool grad_g_terms = true,
-        const bool rot_grad_g_terms = true
+        const bool rot_grad_g_terms = true,
+        const bool shape_terms = false
         ) override;
 
 
@@ -205,6 +207,17 @@ protected:
     */
     EigRowVecN<Complex, 15> compute_rot_grad_g_terms(
         const SrcResult& src_result, const QuadratureData<3>& qd);
+
+
+    /**
+    * @brief Computes the kernel-gradient moments for shape derivatives.
+    * @param[in] src_result - Result of the source integration, with shape terms.
+    * @param[in] qd - Observation quadrature data.
+    * @return Moments, see `ObsResult::grad_g_shape`.
+    */
+    EigMat<Complex> compute_grad_g_shape_terms(
+        const SrcResult& src_result, const QuadratureData<3>& qd
+        );
 
 
     std::shared_ptr<TriangleQuadratureBase<3>> tri_quad_;

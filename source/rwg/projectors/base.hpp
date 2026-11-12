@@ -18,6 +18,8 @@
 #ifndef BEM_RWG_PROJ_BASE_H
 #define BEM_RWG_PROJ_BASE_H
 
+#include <stdexcept>
+
 #include "types.hpp"
 #include "geometry/operations.hpp"
 #include "geometry/primitives/triangle.hpp"
@@ -74,6 +76,26 @@ public:
     * @param[in] obs_points - Original observation points.
     * @param[in] src_tri - Original source triangle.
     */
+    /**
+    * @brief Computes the shape derivatives of the projector for a given source triangle.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] obs_points - Observation coordinates on which to project the generated field.
+    * @param[in] src_tri - Source triangle.
+    * @return Derivatives with respect to the vertex coordinates of `src_tri`. Rows are ordered as
+    * in `compute()`, and columns as `9 * src_dof + 3 * vertex + component`.
+    * @details
+    * The expansion functions follow the deformation through the Piola transform, as in
+    * Kataja and Toivanen, Eng. Anal. Bound. Elem. 37, 2013. Projectors that do not support shape
+    * derivatives may leave the default implementation, which throws.
+    */
+    virtual EigMat<Complex> compute_shape(
+        const Complex k,
+        ConstEigRef<EigMatNX<Float, 3>> obs_points,
+        const Triangle<3>& src_tri
+        )
+    { throw std::runtime_error("ProjectorBase::compute_shape(): Not implemented."); };
+
+
     static void transform_coordinates(
         EigMatNX<Float, 3>& obs_points_local,
         Triangle<2>& src_tri_local,

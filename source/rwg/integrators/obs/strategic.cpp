@@ -33,7 +33,8 @@ ObsResult ObsStrategic::integrate(
     const bool g_term,
     const bool rs_g_terms,
     const bool grad_g_terms,
-    const bool rot_grad_g_terms
+    const bool rot_grad_g_terms,
+    const bool shape_terms
     )
 {
 
@@ -63,17 +64,23 @@ ObsResult ObsStrategic::integrate(
 
     if (line_integration)
         return line_.integrate(
-            k, obs_tri, src_tri, g_term, rs_g_terms, grad_g_terms, rot_grad_g_terms
+            k, obs_tri, src_tri, g_term, rs_g_terms, grad_g_terms, rot_grad_g_terms, shape_terms
             );
 
     else if (singularity_subtraction)
-        return sthgf_.integrate(k, obs_tri, src_tri, g_term, rs_g_terms, grad_g_terms, rot_grad_g_terms);
+        return sthgf_.integrate(
+            k, obs_tri, src_tri, g_term, rs_g_terms, grad_g_terms, rot_grad_g_terms, shape_terms
+            );
 
     else if (singularity_separation)
-        return shgf_.integrate(k, obs_tri, src_tri, g_term, rs_g_terms, grad_g_terms, rot_grad_g_terms);
+        return shgf_.integrate(
+            k, obs_tri, src_tri, g_term, rs_g_terms, grad_g_terms, rot_grad_g_terms, shape_terms
+            );
 
     else
-        return hgf_.integrate(k, obs_tri, src_tri, g_term, rs_g_terms, grad_g_terms, rot_grad_g_terms);
+        return hgf_.integrate(
+            k, obs_tri, src_tri, g_term, rs_g_terms, grad_g_terms, rot_grad_g_terms, shape_terms
+            );
 
 };
 

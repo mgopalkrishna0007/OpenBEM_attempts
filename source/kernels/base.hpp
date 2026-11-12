@@ -19,6 +19,7 @@
 #define BEM_KERNEL_BASE_H
 
 #include <cassert>
+#include <stdexcept>
 
 #include "types.hpp"
 #include "constants.hpp"
@@ -72,6 +73,24 @@ public:
         ConstEigRef<EigMatNX<Float, dim>> r_src,
         const Complex k
         ) const = 0;
+
+
+    /**
+    * @brief Computes the Hessian of the scalar kernel for given observation and source points.
+    * @param[in] r_obs - Observer position vector.
+    * @param[in] r_src - Set of source position vectors.
+    * @param[in] k - Complex wavenumber.
+    * @return Unique components of the Hessian of the scalar kernel, ordered as
+    * \f$ (xx, xy, xz, yy, yz, zz) \f$ in 3D or \f$ (xx, xy, yy) \f$ in 2D.
+    * @note Used for shape derivatives of field projections. Kernels that do not need it may leave
+    * the default implementation, which throws.
+    */
+    virtual EigMatNX<Complex, dim * (dim + 1) / 2> compute_hess(
+        ConstEigRef<EigColVecN<Float, dim>> r_obs,
+        ConstEigRef<EigMatNX<Float, dim>> r_src,
+        const Complex k
+        ) const
+    { throw std::runtime_error("ScalarKernelBase::compute_hess(): Not implemented."); };
 
 
     /**
